@@ -42,11 +42,12 @@ import realm
 from realm import Realm
 import pprint
 
-OPEN="open"
-WEP="wep"
-WPA="wpa"
-WPA2="wpa2"
-MODE_AUTO=0
+OPEN = "open"
+WEP = "wep"
+WPA = "wpa"
+WPA2 = "wpa2"
+MODE_AUTO = 0
+
 
 class SingleClient(LFCliBase):
     def __init__(self, host, port, _dut_ssid="jedway-open-1", _dut_passwd="NA", _dut_bssid="",
@@ -76,9 +77,9 @@ class SingleClient(LFCliBase):
         self.upstream_url = None  # defer construction
         self.station_names = []
         if _sta_name is not None:
-            self.station_names = [ _sta_name ]
+            self.station_names = [_sta_name]
         # self.localrealm :Realm = Realm(lfclient_host=host, lfclient_port=port) # py > 3.6
-        self.localrealm = Realm(lfclient_host=host, lfclient_port=port) # py > 3.6
+        self.localrealm = Realm(lfclient_host=host, lfclient_port=port)  # py > 3.6
         self.resulting_stations = {}
         self.resulting_endpoints = {}
         self.station_profile = None
@@ -122,10 +123,10 @@ class SingleClient(LFCliBase):
         self.station_results = self.localrealm.find_ports_like("sta*", fields, debug_=False)
         if (self.station_results is None) or (len(self.station_results) < 1):
             self.get_failed_result_list()
-        for eid,record in self.station_results.items():
+        for eid, record in self.station_results.items():
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
-            #pprint(eid)
-            #pprint(record)
+            # pprint(eid)
+            # pprint(record)
             if record["ap"] == bssid:
                 counter += 1
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
@@ -140,7 +141,8 @@ class SingleClient(LFCliBase):
     def setup(self):
         self.clear_test_results()
         self.check_connect()
-        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" % self.get_upstream_url(), debug_=False)
+        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" %
+                                      self.get_upstream_url(), debug_=False)
 
         if upstream_json is None:
             self._fail(message="Unable to query %s, bye" % self.upstream_port, print_=True)
@@ -166,19 +168,25 @@ class SingleClient(LFCliBase):
         self.station_profile = self.localrealm.new_station_profile()
 
         if self.dut_security == WPA2:
-            self.station_profile.use_security(security_type="wpa2", ssid=self.dut_ssid, passwd=self.dut_passwd)
+            self.station_profile.use_security(
+                security_type="wpa2", ssid=self.dut_ssid, passwd=self.dut_passwd)
         elif self.dut_security == WPA:
-            self.station_profile.use_security(security_type="wpa", ssid=self.dut_ssid, passwd=self.dut_passwd)
+            self.station_profile.use_security(
+                security_type="wpa", ssid=self.dut_ssid, passwd=self.dut_passwd)
         elif self.dut_security == OPEN:
-            self.station_profile.use_security(security_type="open", ssid=self.dut_ssid, passwd="[BLANK]")
+            self.station_profile.use_security(
+                security_type="open", ssid=self.dut_ssid, passwd="[BLANK]")
         elif self.dut_security == WPA:
-            self.station_profile.use_security(security_type="wpa", ssid=self.dut_ssid, passwd=self.dut_passwd)
+            self.station_profile.use_security(
+                security_type="wpa", ssid=self.dut_ssid, passwd=self.dut_passwd)
         elif self.dut_security == WEP:
-            self.station_profile.use_security(security_type="wep", ssid=self.dut_ssid, passwd=self.dut_passwd)
+            self.station_profile.use_security(
+                security_type="wep", ssid=self.dut_ssid, passwd=self.dut_passwd)
         self.station_profile.set_command_flag("add_sta", "create_admin_down", 1)
 
         print("Adding new stations ", end="")
-        self.station_profile.create(radio=self.radio, sta_names_=self.station_names, up_=False, debug=self.debug, suppress_related_commands_=True)
+        self.station_profile.create(radio=self.radio, sta_names_=self.station_names,
+                                    up_=False, debug=self.debug, suppress_related_commands_=True)
         LFUtils.wait_until_ports_appear(self.lfclient_url, self.station_names, debug=self.debug)
 
     def start(self):
@@ -190,9 +198,9 @@ class SingleClient(LFCliBase):
         if self.station_profile.up == False:
             print("\nBringing ports up...")
             data = {"shelf": 1,
-                     "resource": self.resource,
-                     "port": "ALL",
-                     "probe_flags": 1}
+                    "resource": self.resource,
+                    "port": "ALL",
+                    "probe_flags": 1}
             self.json_post("/cli-json/nc_show_ports", data)
             self.station_profile.admin_up()
             LFUtils.waitUntilPortsAdminUp(self.resource, self.lfclient_url, self.station_names)
@@ -229,7 +237,7 @@ class SingleClient(LFCliBase):
                     else:
                         connected_stations[sta_name] = sta_url
             data = {
-                "shelf":1,
+                "shelf": 1,
                 "resource": self.resource,
                 "port": "ALL",
                 "probe_flags": 1
@@ -238,7 +246,7 @@ class SingleClient(LFCliBase):
 
         for sta_name in self.station_names:
             sta_url = self.get_station_url(sta_name)
-            station_info = self.json_get(sta_url) # + "?fields=port,ip,ap")
+            station_info = self.json_get(sta_url)  # + "?fields=port,ip,ap")
             if station_info is None:
                 print("unable to query %s" % sta_url)
             self.resulting_stations[sta_url] = station_info
@@ -252,7 +260,8 @@ class SingleClient(LFCliBase):
                         # self.test_results.append("PASSED: )
                         # print("PASSED: Connected to BSSID: "+ap)
                     else:
-                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" % (sta_name, self.dut_bssid, ap))
+                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" %
+                                   (sta_name, self.dut_bssid, ap))
             else:
                 self._fail(sta_name+" did not connect to AP")
                 return False
@@ -278,9 +287,9 @@ class SingleClient(LFCliBase):
         self.l3_udp_tput_profile.report_timer = 1000
         self.l3_udp_tput_profile.name_prefix = "udp"
         self.l3_udp_tput_profile.create(endp_type="lf_udp",
-                                      side_a=list(self.localrealm.find_ports_like("tput+")),
-                                      side_b="%d.%s" % (self.resource, self.upstream_port),
-                                      suppress_related_commands=True)
+                                        side_a=list(self.localrealm.find_ports_like("tput+")),
+                                        side_b="%d.%s" % (self.resource, self.upstream_port),
+                                        suppress_related_commands=True)
 
     def tcp_profile(self, side_a_min_bps, side_b_min_bps):
         # Create TCP endpoints - original code!
@@ -290,9 +299,9 @@ class SingleClient(LFCliBase):
         self.l3_tcp_tput_profile.name_prefix = "tcp"
         self.l3_tcp_tput_profile.report_timer = 1000
         self.l3_tcp_tput_profile.create(endp_type="lf_tcp",
-                                    side_a=list(self.localrealm.find_ports_like("tput+")),
-                                    side_b="%d.%s" % (self.resource, self.upstream_port),
-                                    suppress_related_commands=True)
+                                        side_a=list(self.localrealm.find_ports_like("tput+")),
+                                        side_b="%d.%s" % (self.resource, self.upstream_port),
+                                        suppress_related_commands=True)
 
     # Start UDP Downstream Traffic
     def udp_throughput(self):
@@ -342,7 +351,7 @@ class SingleClient(LFCliBase):
     # New Endpoint code to print TX and RX numbers
     def collect_client_stats(self, endp_map):
         print("Collecting Data")
-        fields="?fields=name,tx+bytes,rx+bytes"
+        fields = "?fields=name,tx+bytes,rx+bytes"
         for (cx_name, endps) in endp_map.items():
             try:
                 endp_url = "/endp/%s%s" % (endps[0], fields)
@@ -379,7 +388,7 @@ class SingleClient(LFCliBase):
             for (cx_name, endp_names) in self.l3_udp_tput_profile.created_cx.items():
                 curr_endp_names.append(endp_names[0])
                 curr_endp_names.append(endp_names[1])
-            removeEndps(self.lfclient_url, curr_endp_names, debug= self.debug)
+            removeEndps(self.lfclient_url, curr_endp_names, debug=self.debug)
 
     def cleanup_tcp(self):
         # remove all endpoints and cxs
@@ -391,7 +400,7 @@ class SingleClient(LFCliBase):
             for (cx_name, endp_names) in self.l3_tcp_tput_profile.created_cx.items():
                 curr_endp_names.append(endp_names[0])
                 curr_endp_names.append(endp_names[1])
-            removeEndps(self.lfclient_url, curr_endp_names, debug= self.debug)
+            removeEndps(self.lfclient_url, curr_endp_names, debug=self.debug)
 
     def cleanup(self):
         # remove all endpoints and cxs
@@ -442,7 +451,7 @@ class SingleClient(LFCliBase):
         return mpbs
 
     def throughput_csv(csv_file, ssid_name, ap_model, firmware, security, udp_ds, udp_us, tcp_ds, tcp_us):
-           # Find band for CSV ---> This code is not great, it SHOULD get that info from LANForge!
+        # Find band for CSV ---> This code is not great, it SHOULD get that info from LANForge!
         if "5G" in ssid_name:
             frequency = "5 GHz"
 
@@ -498,7 +507,7 @@ class SingleClientEAP(LFCliBase):
         self.station_profile.security = self.security
         self.station_profile.number_template_ = self.number_template
         self.station_profile.mode = 0
-        #Added to test_ipv4_ttls code
+        # Added to test_ipv4_ttls code
         self.upstream_url = None  # defer construction
         self.sta_url_map = None
         self.upstream_resource = None
@@ -552,10 +561,10 @@ class SingleClientEAP(LFCliBase):
         self.station_results = self.localrealm.find_ports_like("eap*", fields, debug_=False)
         if (self.station_results is None) or (len(self.station_results) < 1):
             self.get_failed_result_list()
-        for eid,record in self.station_results.items():
+        for eid, record in self.station_results.items():
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
-            #pprint(eid)
-            #pprint(record)
+            # pprint(eid)
+            # pprint(record)
             if record["ap"] == bssid:
                 counter += 1
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
@@ -570,7 +579,8 @@ class SingleClientEAP(LFCliBase):
     def setup(self):
         self.clear_test_results()
         self.check_connect()
-        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" % self.get_upstream_url(), debug_=False)
+        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" %
+                                      self.get_upstream_url(), debug_=False)
 
         if upstream_json is None:
             self._fail(message="Unable to query %s, bye" % self.upstream_port, print_=True)
@@ -606,7 +616,8 @@ class SingleClientEAP(LFCliBase):
                                             passwd=self.ttls_passwd,
                                             realm=self.ttls_realm, domain=self.domain,
                                             hessid=self.hessid)
-        self.station_profile.create(radio=self.radio, sta_names_=self.sta_list, debug=self.debug, use_radius=True, hs20_enable=False)
+        self.station_profile.create(radio=self.radio, sta_names_=self.sta_list,
+                                    debug=self.debug, use_radius=True, hs20_enable=False)
         self._pass("PASS: Station build finished")
 
     def start(self):
@@ -618,9 +629,9 @@ class SingleClientEAP(LFCliBase):
         if self.station_profile.up == False:
             print("\nBringing ports up...")
             data = {"shelf": 1,
-                     "resource": self.resource,
-                     "port": "ALL",
-                     "probe_flags": 1}
+                    "resource": self.resource,
+                    "port": "ALL",
+                    "probe_flags": 1}
             self.json_post("/cli-json/nc_show_ports", data)
             self.station_profile.admin_up()
             LFUtils.waitUntilPortsAdminUp(self.resource, self.lfclient_url, self.station_names)
@@ -657,7 +668,7 @@ class SingleClientEAP(LFCliBase):
                     else:
                         connected_stations[sta_name] = sta_url
             data = {
-                "shelf":1,
+                "shelf": 1,
                 "resource": self.resource,
                 "port": "ALL",
                 "probe_flags": 1
@@ -666,7 +677,7 @@ class SingleClientEAP(LFCliBase):
 
         for sta_name in self.station_names:
             sta_url = self.get_station_url(sta_name)
-            station_info = self.json_get(sta_url) # + "?fields=port,ip,ap")
+            station_info = self.json_get(sta_url)  # + "?fields=port,ip,ap")
             if station_info is None:
                 print("unable to query %s" % sta_url)
             self.resulting_stations[sta_url] = station_info
@@ -680,7 +691,8 @@ class SingleClientEAP(LFCliBase):
                         # self.test_results.append("PASSED: )
                         # print("PASSED: Connected to BSSID: "+ap)
                     else:
-                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" % (sta_name, self.dut_bssid, ap))
+                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" %
+                                   (sta_name, self.dut_bssid, ap))
             else:
                 self._fail(sta_name+" did not connect to AP")
                 return False
@@ -706,9 +718,9 @@ class SingleClientEAP(LFCliBase):
         self.l3_udp_tput_profile.report_timer = 1000
         self.l3_udp_tput_profile.name_prefix = "udp"
         self.l3_udp_tput_profile.create(endp_type="lf_udp",
-                                      side_a=list(self.localrealm.find_ports_like("tput+")),
-                                      side_b="%d.%s" % (self.resource, self.upstream_port),
-                                      suppress_related_commands=True)
+                                        side_a=list(self.localrealm.find_ports_like("tput+")),
+                                        side_b="%d.%s" % (self.resource, self.upstream_port),
+                                        suppress_related_commands=True)
 
     def tcp_profile(self, side_a_min_bps, side_b_min_bps):
         # Create TCP endpoints - original code!
@@ -718,9 +730,9 @@ class SingleClientEAP(LFCliBase):
         self.l3_tcp_tput_profile.name_prefix = "tcp"
         self.l3_tcp_tput_profile.report_timer = 1000
         self.l3_tcp_tput_profile.create(endp_type="lf_tcp",
-                                    side_a=list(self.localrealm.find_ports_like("tput+")),
-                                    side_b="%d.%s" % (self.resource, self.upstream_port),
-                                    suppress_related_commands=True)
+                                        side_a=list(self.localrealm.find_ports_like("tput+")),
+                                        side_b="%d.%s" % (self.resource, self.upstream_port),
+                                        suppress_related_commands=True)
 
     # Start UDP Downstream Traffic
     def udp_throughput(self):
@@ -770,7 +782,7 @@ class SingleClientEAP(LFCliBase):
     # New Endpoint code to print TX and RX numbers
     def collect_client_stats(self, endp_map):
         print("Collecting Data")
-        fields="?fields=name,tx+bytes,rx+bytes"
+        fields = "?fields=name,tx+bytes,rx+bytes"
         for (cx_name, endps) in endp_map.items():
             try:
                 endp_url = "/endp/%s%s" % (endps[0], fields)
@@ -807,7 +819,7 @@ class SingleClientEAP(LFCliBase):
             for (cx_name, endp_names) in self.l3_udp_tput_profile.created_cx.items():
                 curr_endp_names.append(endp_names[0])
                 curr_endp_names.append(endp_names[1])
-            removeEndps(self.lfclient_url, curr_endp_names, debug= self.debug)
+            removeEndps(self.lfclient_url, curr_endp_names, debug=self.debug)
 
     def cleanup_tcp(self):
         # remove all endpoints and cxs
@@ -819,7 +831,7 @@ class SingleClientEAP(LFCliBase):
             for (cx_name, endp_names) in self.l3_tcp_tput_profile.created_cx.items():
                 curr_endp_names.append(endp_names[0])
                 curr_endp_names.append(endp_names[1])
-            removeEndps(self.lfclient_url, curr_endp_names, debug= self.debug)
+            removeEndps(self.lfclient_url, curr_endp_names, debug=self.debug)
 
     def cleanup(self):
         # remove all endpoints and cxs
@@ -874,7 +886,7 @@ class SingleClientEAP(LFCliBase):
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ########################## Test Code ################################
 
-##Main will perform 4 throughput tests on SSID provided by input and return a list with the values
+# Main will perform 4 throughput tests on SSID provided by input and return a list with the values
 
 def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, upstream_port):
     ######## Establish Client Connection #########################
@@ -891,7 +903,7 @@ def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runt
     singleClient.runtime_secs = runtime
     singleClient.cleanup_on_exit = True
 
-    #Create List for Throughput Data
+    # Create List for Throughput Data
     tput_data = []
 
     ####### Setup UDP Profile and Run Traffic Downstream (AP to STA)  #######################
@@ -903,7 +915,8 @@ def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runt
     direction = "Downstream"
     values_line = 1        # 1 = Station Rx
     try:
-        udp_ds = singleClient.udp_unidirectional(side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
+        udp_ds = singleClient.udp_unidirectional(
+            side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
         print("UDP Downstream:", udp_ds, "Mbps")
         tput_data.append("UDP Downstream: " + str(udp_ds))
     except:
@@ -911,9 +924,8 @@ def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runt
         print("UDP Downstream Test Error")
         tput_data.append("UDP Downstream: Error")
 
-
     ####### Setup UDP Profile and Run Traffic Upstream (STA to AP)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 500000000
     side_b_min_bps = 0
     side_a_min_pdu = 1200
@@ -921,26 +933,27 @@ def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runt
     direction = "Upstream"
     values_line = 3        # 3 = AP Rx
     try:
-        udp_us = singleClient.udp_unidirectional(side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
-        print("UDP Upstream:",udp_us,"Mbps")
+        udp_us = singleClient.udp_unidirectional(
+            side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
+        print("UDP Upstream:", udp_us, "Mbps")
         tput_data.append("UDP Upstream: " + str(udp_us))
     except:
         udp_us = "error"
         print("UDP Upstream Test Error")
         tput_data.append("UDP Upstream: Error")
-    #Cleanup UDP Endpoints
-    #singleClient.cleanup_udp()
-
+    # Cleanup UDP Endpoints
+    # singleClient.cleanup_udp()
 
     ####### Setup TCP Profile and Run Traffic Downstream (AP to STA)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 0
     side_b_min_bps = 500000000
     direction = "Downstream"
     values_line = 1        # 1 = Station Rx
     try:
-        tcp_ds = singleClient.tcp_unidirectional(side_a_min_bps, side_b_min_bps, direction, values_line)
-        print("TCP Downstream:",tcp_ds,"Mbps")
+        tcp_ds = singleClient.tcp_unidirectional(
+            side_a_min_bps, side_b_min_bps, direction, values_line)
+        print("TCP Downstream:", tcp_ds, "Mbps")
         tput_data.append("TCP Downstream: " + str(tcp_ds))
     except:
         tcp_ds = "error"
@@ -948,27 +961,29 @@ def main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runt
         tput_data.append("TCP Downstream: Error")
 
     ####### Setup TCP Profile and Run Traffic Upstream (STA to AP)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 500000000
     side_b_min_bps = 0
     direction = "Upstream"
     values_line = 3        # 3 = AP Rx
     try:
-        tcp_us = singleClient.tcp_unidirectional(side_a_min_bps, side_b_min_bps, direction, values_line)
-        print("TCP Upstream:",tcp_us,"Mbps")
+        tcp_us = singleClient.tcp_unidirectional(
+            side_a_min_bps, side_b_min_bps, direction, values_line)
+        print("TCP Upstream:", tcp_us, "Mbps")
         tput_data.append("TCP Upstream: " + str(tcp_us))
     except:
         tcp_us = "error"
         print("TCP Upstream Test Error")
         tput_data.append("TCP Uptream: Error")
 
-    #Cleanup TCP Endpoints
-    #singleClient.cleanup_tcp()
+    # Cleanup TCP Endpoints
+    # singleClient.cleanup_tcp()
 
-    #Cleanup Endpoints
+    # Cleanup Endpoints
     singleClient.cleanup()
 
     return(tput_data)
+
 
 def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, upstream_port):
     eap_connect = SingleClientEAP("10.10.10.201", 8080, _debug_on=False)
@@ -984,7 +999,7 @@ def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_pass
     eap_connect.ttls_passwd = ttls_password
     eap_connect.runtime_secs = 10
 
-    #Create List for Throughput Data
+    # Create List for Throughput Data
     tput_data = []
 
     ####### Setup UDP Profile and Run Traffic Downstream (AP to STA)  #######################
@@ -996,7 +1011,8 @@ def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_pass
     direction = "Downstream"
     values_line = 1        # 1 = Station Rx
     try:
-        udp_ds = eap_connect.udp_unidirectional(side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
+        udp_ds = eap_connect.udp_unidirectional(
+            side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
         print("UDP Downstream:", udp_ds, "Mbps")
         tput_data.append("UDP Downstream: " + str(udp_ds))
     except:
@@ -1004,9 +1020,8 @@ def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_pass
         print("UDP Downstream Test Error")
         tput_data.append("UDP Downstream: Error")
 
-
     ####### Setup UDP Profile and Run Traffic Upstream (STA to AP)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 500000000
     side_b_min_bps = 0
     side_a_min_pdu = 1200
@@ -1014,26 +1029,27 @@ def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_pass
     direction = "Upstream"
     values_line = 3        # 3 = AP Rx
     try:
-        udp_us = eap_connect.udp_unidirectional(side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
-        print("UDP Upstream:",udp_us,"Mbps")
+        udp_us = eap_connect.udp_unidirectional(
+            side_a_min_bps, side_b_min_bps, side_a_min_pdu, side_b_min_pdu, direction, values_line)
+        print("UDP Upstream:", udp_us, "Mbps")
         tput_data.append("UDP Upstream: " + str(udp_us))
     except:
         udp_us = "error"
         print("UDP Upstream Test Error")
         tput_data.append("UDP Upstream: Error")
-    #Cleanup UDP Endpoints
-    #singleClient.cleanup_udp()
-
+    # Cleanup UDP Endpoints
+    # singleClient.cleanup_udp()
 
     ####### Setup TCP Profile and Run Traffic Downstream (AP to STA)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 0
     side_b_min_bps = 500000000
     direction = "Downstream"
     values_line = 1        # 1 = Station Rx
     try:
-        tcp_ds = eap_connect.tcp_unidirectional(side_a_min_bps, side_b_min_bps, direction, values_line)
-        print("TCP Downstream:",tcp_ds,"Mbps")
+        tcp_ds = eap_connect.tcp_unidirectional(
+            side_a_min_bps, side_b_min_bps, direction, values_line)
+        print("TCP Downstream:", tcp_ds, "Mbps")
         tput_data.append("TCP Downstream: " + str(tcp_ds))
     except:
         tcp_ds = "error"
@@ -1041,24 +1057,25 @@ def eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_pass
         tput_data.append("TCP Downstream: Error")
 
     ####### Setup TCP Profile and Run Traffic Upstream (STA to AP)  #######################
-    #singleClient.setup()
+    # singleClient.setup()
     side_a_min_bps = 500000000
     side_b_min_bps = 0
     direction = "Upstream"
     values_line = 3        # 3 = AP Rx
     try:
-        tcp_us = eap_connect.tcp_unidirectional(side_a_min_bps, side_b_min_bps, direction, values_line)
-        print("TCP Upstream:",tcp_us,"Mbps")
+        tcp_us = eap_connect.tcp_unidirectional(
+            side_a_min_bps, side_b_min_bps, direction, values_line)
+        print("TCP Upstream:", tcp_us, "Mbps")
         tput_data.append("TCP Upstream: " + str(tcp_us))
     except:
         tcp_us = "error"
         print("TCP Upstream Test Error")
         tput_data.append("TCP Uptream: Error")
 
-    #Cleanup TCP Endpoints
-    #singleClient.cleanup_tcp()
+    # Cleanup TCP Endpoints
+    # singleClient.cleanup_tcp()
 
-    #Cleanup Endpoints
+    # Cleanup Endpoints
     eap_connect.cleanup()
 
     return(tput_data)

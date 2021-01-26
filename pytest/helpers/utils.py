@@ -109,6 +109,7 @@ class jFrog_Client:
         return f"https://{self.user}:{self.password}@{self.baseUrl}/{model}/dev/{latest_image}.tar.gz"
 
 # Class for CloudSDK Interaction via RestAPI
+'''
 class CloudSDK_Client:
     def __init__(self, url, user, password):
         self.baseUrl = f"https://{url}"
@@ -184,3 +185,4 @@ class CloudSDK_Client:
         self.headers["Content-Type"] = "application/json"
         response = requests.put(url, headers=self.headers, data=json.dumps(equipment_info))
         self.headers.pop("Content-Type", None)
+'''

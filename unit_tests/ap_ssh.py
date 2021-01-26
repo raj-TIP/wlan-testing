@@ -11,6 +11,7 @@ import logging
 
 owrt_args = "--prompt root@OpenAp -s serial --log stdout --user root --passwd openwifi"
 
+
 def ssh_cli_connect(command_line_args):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -25,13 +26,16 @@ def ssh_cli_connect(command_line_args):
     jumphost_port = command_line_args.ap_jumphost_port
 
     if command_line_args.ap_jumphost_address != None:
-        print("Connecting to jumphost: %s@%s:%s with password: %s"%(jumphost_username, jumphost_ip, jumphost_port, jumphost_password))
+        print("Connecting to jumphost: %s@%s:%s with password: %s" %
+              (jumphost_username, jumphost_ip, jumphost_port, jumphost_password))
         client.connect(jumphost_ip, username=jumphost_username, password=jumphost_password,
                        port=jumphost_port, timeout=10)
     else:
-        print("Connecting to AP with ssh: %s@%s with password: %s"%(ap_username, ap_ip, jumphost_password))
+        print("Connecting to AP with ssh: %s@%s with password: %s" %
+              (ap_username, ap_ip, jumphost_password))
         client.connect(ap_ip, username=ap_username, password=ap_password, timeout=10)
     return client
+
 
 def ssh_cli_active_fw(command_line_args):
     try:
@@ -42,21 +46,23 @@ def ssh_cli_active_fw(command_line_args):
 
         ap_cmd = "/usr/opensync/bin/ovsh s AWLAN_Node -c | grep FW_IMAGE_ACTIVE"
         if command_line_args.ap_jumphost_address != None:
-            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+                jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
             stdin, stdout, stderr = client.exec_command(cmd)
         else:
             stdin, stdout, stderr = client.exec_command(ap_cmd)
 
         version_matrix = str(stdout.read(), 'utf-8')
         err = str(stderr.read(), 'utf-8')
-        print("version-matrix: %s  stderr: %s"%(version_matrix, err))
+        print("version-matrix: %s  stderr: %s" % (version_matrix, err))
         version_matrix_split = version_matrix.partition('FW_IMAGE_ACTIVE","')[2]
         cli_active_fw = version_matrix_split.partition('"],[')[0]
         #print("Active FW is",cli_active_fw)
 
         ap_cmd = "/usr/opensync/bin/ovsh s Manager -c | grep status"
         if command_line_args.ap_jumphost_address != None:
-            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+                jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
             stdin, stdout, stderr = client.exec_command(cmd)
         else:
             stdin, stdout, stderr = client.exec_command(ap_cmd)
@@ -64,7 +70,7 @@ def ssh_cli_active_fw(command_line_args):
         status = str(stdout.read(), 'utf-8')
         err = str(stderr.read(), 'utf-8')
 
-        print("status: %s  stderr: %s"%(status, err))
+        print("status: %s  stderr: %s" % (status, err))
 
         if "ACTIVE" in status:
             #print("AP is in Active state")
@@ -93,6 +99,7 @@ def ssh_cli_active_fw(command_line_args):
         print("AP Unreachable")
         return "ERROR"
 
+
 def iwinfo_status(command_line_args):
     try:
         client = ssh_cli_connect(command_line_args)
@@ -102,7 +109,8 @@ def iwinfo_status(command_line_args):
 
         ap_cmd = "iwinfo | grep ESSID"
         if command_line_args.ap_jumphost_address != None:
-            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+                jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
             stdin, stdout, stderr = client.exec_command(cmd)
         else:
             stdin, stdout, stderr = client.exec_command(ap_cmd)
@@ -130,7 +138,8 @@ def ap_ssh_ovsh_nodec(command_line_args, key):
 
         ap_cmd = "/usr/opensync/bin/ovsh s AWLAN_Node -c"
         if command_line_args.ap_jumphost_address != None:
-            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+            cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+                jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
             stdin, stdout, stderr = client.exec_command(cmd)
         else:
             stdin, stdout, stderr = client.exec_command(ap_cmd)
@@ -162,6 +171,7 @@ def ap_ssh_ovsh_nodec(command_line_args, key):
         print("AP Unreachable")
         return "ERROR"
 
+
 def ap_ssh_ovsh_by_key(command_line_args, ovsh_cmd, key):
     jumphost_wlan_testing = command_line_args.ap_jumphost_wlan_testing
     jumphost_tty = command_line_args.ap_jumphost_tty
@@ -170,7 +180,8 @@ def ap_ssh_ovsh_by_key(command_line_args, ovsh_cmd, key):
 
     ap_cmd = ovsh_cmd
     if command_line_args.ap_jumphost_address != None:
-        cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+        cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+            jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
         stdin, stdout, stderr = client.exec_command(cmd)
     else:
         stdin, stdout, stderr = client.exec_command(ap_cmd)
@@ -202,6 +213,8 @@ def ap_ssh_ovsh_by_key(command_line_args, ovsh_cmd, key):
     return output
 
 # This can throw exceptions, calling code beware.
+
+
 def ap_ssh_cmd(command_line_args, ap_cmd):
     jumphost_wlan_testing = command_line_args.ap_jumphost_wlan_testing
     jumphost_tty = command_line_args.ap_jumphost_tty
@@ -209,7 +222,8 @@ def ap_ssh_cmd(command_line_args, ap_cmd):
     client = ssh_cli_connect(command_line_args)
 
     if command_line_args.ap_jumphost_address != None:
-        cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\""%(jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
+        cmd = "cd %s/lanforge/lanforge-scripts/ && ./openwrt_ctl.py %s -t %s --action cmd --value \"%s\"" % (
+            jumphost_wlan_testing, owrt_args, jumphost_tty, ap_cmd)
         stdin, stdout, stderr = client.exec_command(cmd)
     else:
         stdin, stdout, stderr = client.exec_command(ap_cmd)
@@ -217,9 +231,11 @@ def ap_ssh_cmd(command_line_args, ap_cmd):
     output = str(stdout.read(), 'utf-8')
     return output
 
+
 def get_vif_config(command_line_args):
     ap_cmd = "/usr/opensync/bin/ovsh s Wifi_VIF_Config -c"
     return ap_ssh_ovsh_by_key(command_line_args, ap_cmd, "ssid")
+
 
 def get_vif_state(command_line_args):
     ap_cmd = "/usr/opensync/bin/ovsh s Wifi_VIF_State -c"

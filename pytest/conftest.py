@@ -1,10 +1,18 @@
 import pytest
-from time import sleep, gmtime, strftime
-
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'helpers'))
-from utils import CloudSDK_Client, TestRail_Client, jFrog_Client
+
+sys.path.append(os.path.join(os.path.dirname(__file__),'../lanforge/py-json'))
+sys.path.append(os.path.join(os.path.dirname(__file__),'../lanforge/py-scripts'))
+
+from utils import TestRail_Client, jFrog_Client
+from cloudsdk import CloudSDK_Client
+from time import sleep, gmtime, strftime
+
+import sta_connect2
+from sta_connect2 import StaConnect2
+
 
 def pytest_addoption(parser):
     parser.addini("jfrog-base-url", "jfrog base url")
@@ -141,26 +149,31 @@ def pytest_addoption(parser):
     parser.addoption(
         "--access-points",
         nargs="+",
-        default=[ "ECW5410" ],
+        default=["ECW5410"],
         help="list of access points to test"
     )
 
+
 def pytest_generate_tests(metafunc):
-    metafunc.parametrize("access_points", metafunc.config.getoption('--access-points'), scope="session")
+    metafunc.parametrize("access_points", metafunc.config.getoption(
+        '--access-points'), scope="session")
 
 # run something after all tests are done regardless of the outcome
+
+
 def pytest_unconfigure(config):
     print("Tests cleanup done")
+
 
 @pytest.fixture(scope="session")
 def setup_testrails(request, instantiate_testrail, access_points):
     if request.config.getoption("--no-testrails"):
         yield -1
-        return # needed to stop fixture execution
+        return  # needed to stop fixture execution
     if request.config.getoption("--skip-update-firmware"):
         firmware_update_case = []
     else:
-        firmware_update_case = [ 2831 ]
+        firmware_update_case = [2831]
     seen = {None}
     test_data = []
     session = request.node
@@ -170,13 +183,15 @@ def setup_testrails(request, instantiate_testrail, access_points):
             if hasattr(cls.obj, "get_test_data"):
                 test_data.append(cls.obj.get_test_data())
             seen.add(cls)
-    testrail_project_id = instantiate_testrail.get_project_id(request.config.getini("testrail-project"))
+    testrail_project_id = instantiate_testrail.get_project_id(
+        request.config.getini("testrail-project"))
     runId = instantiate_testrail.create_testrun(
         name=f'Nightly_model_{access_points}_{strftime("%Y-%m-%d", gmtime())}',
-        case_ids=( [*test_data] + firmware_update_case ),
+        case_ids=([*test_data] + firmware_update_case),
         project_id=testrail_project_id
     )
     yield runId
+
 
 @pytest.fixture(scope="session")
 def setup_cloudsdk(request, instantiate_cloudsdk):
@@ -196,9 +211,10 @@ def setup_cloudsdk(request, instantiate_cloudsdk):
         "24ghz": {
             "ssid": "TipWlan-cloud-wifi",
             "password": "w1r3l3ss-fr33d0m",
-            "station_names": [ "sta2237" ]
+            "station_names": ["sta2237"]
         }
     }
+
 
 @pytest.fixture(scope="session")
 def update_firmware(request, setup_testrails, instantiate_jFrog, instantiate_cloudsdk, access_points):
@@ -228,6 +244,7 @@ def update_firmware(request, setup_testrails, instantiate_jFrog, instantiate_clo
                 return
             sleep(60)
 
+
 @pytest.fixture(scope="session")
 def instantiate_cloudsdk(request):
     yield CloudSDK_Client(
@@ -236,6 +253,7 @@ def instantiate_cloudsdk(request):
         request.config.getini("sdk-user-password")
     )
 
+
 @pytest.fixture(scope="session")
 def instantiate_testrail(request):
     yield TestRail_Client(
@@ -243,6 +261,7 @@ def instantiate_testrail(request):
         request.config.getini("testrail-user-id"),
         request.config.getoption("--testrail-user-password")
     )
+
 
 @pytest.fixture(scope="session")
 def instantiate_jFrog(request):

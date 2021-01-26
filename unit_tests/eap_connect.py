@@ -32,11 +32,12 @@ import realm
 from realm import Realm
 import pprint
 
-OPEN="open"
-WEP="wep"
-WPA="wpa"
-WPA2="wpa2"
-MODE_AUTO=0
+OPEN = "open"
+WEP = "wep"
+WPA = "wpa"
+WPA2 = "wpa2"
+MODE_AUTO = 0
+
 
 class EAPConnect(LFCliBase):
     def __init__(self, host, port, security=None, ssid=None, sta_list=None, number_template="00000", _debug_on=False, _dut_bssid="",
@@ -69,7 +70,7 @@ class EAPConnect(LFCliBase):
         self.station_profile.security = self.security
         self.station_profile.number_template_ = self.number_template
         self.station_profile.mode = 0
-        #Added to test_ipv4_ttls code
+        # Added to test_ipv4_ttls code
         self.upstream_url = None  # defer construction
         self.sta_url_map = None
         self.upstream_resource = None
@@ -120,13 +121,14 @@ class EAPConnect(LFCliBase):
         counter = 0
         # print("there are %d results" % len(self.station_results))
         fields = "_links,port,alias,ip,ap,port+type"
-        self.station_results = self.localrealm.find_ports_like("%s*"%self.sta_prefix, fields, debug_=False)
+        self.station_results = self.localrealm.find_ports_like(
+            "%s*" % self.sta_prefix, fields, debug_=False)
         if (self.station_results is None) or (len(self.station_results) < 1):
             self.get_failed_result_list()
-        for eid,record in self.station_results.items():
+        for eid, record in self.station_results.items():
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
-            #pprint(eid)
-            #pprint(record)
+            # pprint(eid)
+            # pprint(record)
             if record["ap"] == bssid:
                 counter += 1
             #print("-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- ")
@@ -141,7 +143,8 @@ class EAPConnect(LFCliBase):
     def setup(self):
         self.clear_test_results()
         self.check_connect()
-        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" % self.get_upstream_url(), debug_=False)
+        upstream_json = self.json_get("%s?fields=alias,phantom,down,port,ip" %
+                                      self.get_upstream_url(), debug_=False)
 
         if upstream_json is None:
             self._fail(message="Unable to query %s, bye" % self.upstream_port, print_=True)
@@ -177,7 +180,8 @@ class EAPConnect(LFCliBase):
                                             passwd=self.ttls_passwd,
                                             realm=self.ttls_realm, domain=self.domain,
                                             hessid=self.hessid)
-        self.station_profile.create(radio=self.radio, sta_names_=self.sta_list, debug=self.debug, use_radius=True, hs20_enable=False)
+        self.station_profile.create(radio=self.radio, sta_names_=self.sta_list,
+                                    debug=self.debug, use_radius=True, hs20_enable=False)
         self._pass("PASS: Station build finished")
 
         # Create UDP endpoints
@@ -189,7 +193,8 @@ class EAPConnect(LFCliBase):
         self.l3_udp_profile.report_timer = 1000
         self.l3_udp_profile.name_prefix = "udp"
         self.l3_udp_profile.create(endp_type="lf_udp",
-                                   side_a=list(self.localrealm.find_ports_like("%s*"%self.sta_prefix)),
+                                   side_a=list(self.localrealm.find_ports_like(
+                                       "%s*" % self.sta_prefix)),
                                    side_b="%d.%s" % (self.resource, self.upstream_port),
                                    suppress_related_commands=True)
 
@@ -200,7 +205,8 @@ class EAPConnect(LFCliBase):
         self.l3_tcp_profile.name_prefix = "tcp"
         self.l3_tcp_profile.report_timer = 1000
         self.l3_tcp_profile.create(endp_type="lf_tcp",
-                                   side_a=list(self.localrealm.find_ports_like("%s*"%self.sta_prefix)),
+                                   side_a=list(self.localrealm.find_ports_like(
+                                       "%s*" % self.sta_prefix)),
                                    side_b="%d.%s" % (self.resource, self.upstream_port),
                                    suppress_related_commands=True)
 
@@ -213,9 +219,9 @@ class EAPConnect(LFCliBase):
         if self.station_profile.up == False:
             print("\nBringing ports up...")
             data = {"shelf": 1,
-                     "resource": self.resource,
-                     "port": "ALL",
-                     "probe_flags": 1}
+                    "resource": self.resource,
+                    "port": "ALL",
+                    "probe_flags": 1}
             self.json_post("/cli-json/nc_show_ports", data)
             self.station_profile.admin_up()
             LFUtils.waitUntilPortsAdminUp(self.resource, self.lfclient_url, self.station_names)
@@ -252,7 +258,7 @@ class EAPConnect(LFCliBase):
                     else:
                         connected_stations[sta_name] = sta_url
             data = {
-                "shelf":1,
+                "shelf": 1,
                 "resource": self.resource,
                 "port": "ALL",
                 "probe_flags": 1
@@ -261,7 +267,7 @@ class EAPConnect(LFCliBase):
 
         for sta_name in self.station_names:
             sta_url = self.get_station_url(sta_name)
-            station_info = self.json_get(sta_url) # + "?fields=port,ip,ap")
+            station_info = self.json_get(sta_url)  # + "?fields=port,ip,ap")
             if station_info is None:
                 print("unable to query %s" % sta_url)
             self.resulting_stations[sta_url] = station_info
@@ -275,7 +281,8 @@ class EAPConnect(LFCliBase):
                         # self.test_results.append("PASSED: )
                         # print("PASSED: Connected to BSSID: "+ap)
                     else:
-                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" % (sta_name, self.dut_bssid, ap))
+                        self._fail("%s connected to wrong BSSID, requested: %s  Actual: %s" %
+                                   (sta_name, self.dut_bssid, ap))
             else:
                 self._fail(sta_name+" did not connect to AP")
                 return False
@@ -302,7 +309,7 @@ class EAPConnect(LFCliBase):
 
     def collect_endp_stats(self, endp_map):
         print("Collecting Data")
-        fields="?fields=name,tx+bytes,rx+bytes"
+        fields = "?fields=name,tx+bytes,rx+bytes"
         for (cx_name, endps) in endp_map.items():
             try:
                 endp_url = "/endp/%s%s" % (endps[0], fields)
@@ -328,7 +335,6 @@ class EAPConnect(LFCliBase):
             except Exception as e:
                 print("Is this the function having the error?")
                 self.error(e)
-
 
     def stop(self):
         # stop cx traffic
@@ -362,11 +368,10 @@ class EAPConnect(LFCliBase):
                 curr_endp_names.append(endp_names[1])
             for (cx_name, endp_names) in self.l3_tcp_profile.created_cx.items():
                 curr_endp_names.append(endp_names[0])
-                curr_endp_names.append(endp_names[1])        
-            removeEndps(self.lfclient_url, curr_endp_names, debug= self.debug)
+                curr_endp_names.append(endp_names[1])
+            removeEndps(self.lfclient_url, curr_endp_names, debug=self.debug)
 
 # ~class
-
 
 
 if __name__ == "__main__":

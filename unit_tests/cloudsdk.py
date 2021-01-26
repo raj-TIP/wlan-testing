@@ -11,7 +11,8 @@ import base64
 import urllib.request
 from bs4 import BeautifulSoup
 import ssl
-import subprocess, os
+import subprocess
+import os
 from artifactory import ArtifactoryPath
 import tarfile
 import paramiko
@@ -34,7 +35,9 @@ import logging
 import datetime
 import time
 
-###Class for CloudSDK Interaction via RestAPI
+# Class for CloudSDK Interaction via RestAPI
+
+
 class CloudSDK:
     def __init__(self, command_line_args):
         self.user = command_line_args.sdk_user_id
@@ -52,15 +55,17 @@ class CloudSDK:
             'Content-Type': 'application/json'
         }
         try:
-            token_response = requests.request("POST", cloud_login_url, headers=headers, data=payload)
+            token_response = requests.request(
+                "POST", cloud_login_url, headers=headers, data=payload)
         except requests.exceptions.RequestException as e:
-            raise SystemExit("Exiting Script! Cloud not get bearer token for reason:",e)
+            raise SystemExit("Exiting Script! Cloud not get bearer token for reason:", e)
         token_data = token_response.json()
         bearer_token = token_data['access_token']
         return(bearer_token)
 
     def ap_firmware(self, customer_id, equipment_id, cloudSDK_url, bearer):
-        equip_fw_url = cloudSDK_url+"/portal/status/forEquipment?customerId="+customer_id+"&equipmentId="+equipment_id
+        equip_fw_url = cloudSDK_url+"/portal/status/forEquipment?customerId=" + \
+            customer_id+"&equipmentId="+equipment_id
         payload = {}
         headers = {
             'Authorization': 'Bearer ' + bearer
@@ -69,7 +74,7 @@ class CloudSDK:
         status_code = status_response.status_code
         if status_code == 200:
             status_data = status_response.json()
-            #print(status_data)
+            # print(status_data)
             current_ap_fw = status_data[2]['details']['reportedSwVersion']
             return current_ap_fw
         else:
@@ -83,29 +88,30 @@ class CloudSDK:
         }
         response = requests.request("GET", getFW_url, headers=headers, data=payload)
         ap_fw_details = response.json()
-        ###return ap_fw_details
+        # return ap_fw_details
         fwlist = []
         for version in ap_fw_details:
-           fwlist.append(version.get('versionName'))
+            fwlist.append(version.get('versionName'))
         return(fwlist)
         #fw_versionNames = ap_fw_details[0]['versionName']
-        #return fw_versionNames
+        # return fw_versionNames
 
-    def firwmare_upload(self, commit, apModel,latest_image,fw_url,cloudSDK_url,bearer):
+    def firwmare_upload(self, commit, apModel, latest_image, fw_url, cloudSDK_url, bearer):
         fw_upload_url = cloudSDK_url+"/portal/firmware/version"
-        payload = "{\n  \"model_type\": \"FirmwareVersion\",\n  \"id\": 0,\n  \"equipmentType\": \"AP\",\n  \"modelId\": \""+apModel+"\",\n  \"versionName\": \""+latest_image+"\",\n  \"description\": \"\",\n  \"filename\": \""+fw_url+"\",\n  \"commit\": \""+commit+"\",\n  \"validationMethod\": \"MD5_CHECKSUM\",\n  \"validationCode\": \"19494befa87eb6bb90a64fd515634263\",\n  \"releaseDate\": 1596192028877,\n  \"createdTimestamp\": 0,\n  \"lastModifiedTimestamp\": 0\n}\n\n"
+        payload = "{\n  \"model_type\": \"FirmwareVersion\",\n  \"id\": 0,\n  \"equipmentType\": \"AP\",\n  \"modelId\": \""+apModel+"\",\n  \"versionName\": \""+latest_image+"\",\n  \"description\": \"\",\n  \"filename\": \""+fw_url + \
+            "\",\n  \"commit\": \""+commit+"\",\n  \"validationMethod\": \"MD5_CHECKSUM\",\n  \"validationCode\": \"19494befa87eb6bb90a64fd515634263\",\n  \"releaseDate\": 1596192028877,\n  \"createdTimestamp\": 0,\n  \"lastModifiedTimestamp\": 0\n}\n\n"
         headers = {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ' + bearer
         }
 
         response = requests.request("POST", fw_upload_url, headers=headers, data=payload)
-        #print(response)
+        # print(response)
         upload_result = response.json()
         return(upload_result)
 
     def get_firmware_id(self, latest_ap_image, cloudSDK_url, bearer):
-        #print(latest_ap_image)
+        # print(latest_ap_image)
         fw_id_url = cloudSDK_url+"/portal/firmware/version/byName?firmwareVersionName="+latest_ap_image
 
         payload = {}
@@ -128,7 +134,7 @@ class CloudSDK:
         rv = []
         req = 0
         while True:
-            print("Request %i: in get-paged-url, url: %s"%(req, url))
+            print("Request %i: in get-paged-url, url: %s" % (req, url))
             response = requests.request("GET", url, headers=headers, data=payload)
             rjson = response.json()
             rv.append(rjson)
@@ -142,7 +148,7 @@ class CloudSDK:
             url = url_base + "&paginationContext=" + urllib.parse.quote(context_str)
             req = req + 1
             #print("Profile, reading another page, context:")
-            #print(rjson['context'])
+            # print(rjson['context'])
             #print("url: %s"%(fw_id_url))
 
         return rv
@@ -153,7 +159,7 @@ class CloudSDK:
             'Authorization': 'Bearer ' + bearer
         }
 
-        print("Get-url, url: %s"%(url))
+        print("Get-url, url: %s" % (url))
         response = requests.request("GET", url, headers=headers, data=payload)
         return response.json()
 
@@ -175,7 +181,8 @@ class CloudSDK:
                 prof_model_type = e['model_type']
                 prof_type = e['profileType']
                 prof_name = e['name']
-                print("looking for profile: %s  checking prof-id: %s  model-type: %s  type: %s  name: %s"%(name, prof_id, prof_model_type, prof_type, prof_name))
+                print("looking for profile: %s  checking prof-id: %s  model-type: %s  type: %s  name: %s" %
+                      (name, prof_id, prof_model_type, prof_type, prof_name))
                 if name == prof_name:
                     return e
         return None
@@ -229,11 +236,13 @@ class CloudSDK:
         return self.get_paged_url(bearer, url_base)
 
     def get_customer_service_metrics(self, cloudSDK_url, bearer, customer_id, fromTime, toTime):
-        url_base = cloudSDK_url + "/portal/serviceMetric/forCustomer" + "?customerId=" + customer_id + "&fromTime=" + fromTime + "&toTime=" + toTime
+        url_base = cloudSDK_url + "/portal/serviceMetric/forCustomer" + \
+            "?customerId=" + customer_id + "&fromTime=" + fromTime + "&toTime=" + toTime
         return self.get_paged_url(bearer, url_base)
 
     def get_customer_system_events(self, cloudSDK_url, bearer, customer_id, fromTime, toTime):
-        url_base = cloudSDK_url + "/portal/systemEvent/forCustomer" + "?customerId=" + customer_id + "&fromTime=" + fromTime + "&toTime=" + toTime
+        url_base = cloudSDK_url + "/portal/systemEvent/forCustomer" + "?customerId=" + \
+            customer_id + "&fromTime=" + fromTime + "&toTime=" + toTime
         return self.get_paged_url(bearer, url_base)
 
     def get_customer(self, cloudSDK_url, bearer, customer_id):
@@ -256,7 +265,8 @@ class CloudSDK:
         return(response)
 
     def update_firmware(self, equipment_id, latest_firmware_id, cloudSDK_url, bearer):
-        url = cloudSDK_url+"/portal/equipmentGateway/requestFirmwareUpdate?equipmentId="+equipment_id+"&firmwareVersionId="+latest_firmware_id
+        url = cloudSDK_url+"/portal/equipmentGateway/requestFirmwareUpdate?equipmentId=" + \
+            equipment_id+"&firmwareVersionId="+latest_firmware_id
 
         payload = {}
         headers = {
@@ -264,7 +274,7 @@ class CloudSDK:
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        #print(response.text)
+        # print(response.text)
         return response.json()
 
     # This one is not yet tested, coded from spec, could have bugs.
@@ -277,7 +287,7 @@ class CloudSDK:
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        #print(response.text)
+        # print(response.text)
         return response.json()
 
     # This one is not yet tested, coded from spec, could have bugs.
@@ -290,7 +300,7 @@ class CloudSDK:
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        #print(response.text)
+        # print(response.text)
         return response.json()
 
     # This one is not yet tested, coded from spec, could have bugs.
@@ -303,7 +313,7 @@ class CloudSDK:
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        #print(response.text)
+        # print(response.text)
         return response.json()
 
     # This one is not yet tested, coded from spec, could have bugs.
@@ -316,11 +326,11 @@ class CloudSDK:
         }
 
         response = requests.request("POST", url, headers=headers, data=payload)
-        #print(response.text)
+        # print(response.text)
         return response.json()
 
     def set_ap_profile(self, equipment_id, test_profile_id, cloudSDK_url, bearer):
-        ###Get AP Info
+        # Get AP Info
         url = cloudSDK_url+"/portal/equipment?equipmentId="+equipment_id
         payload = {}
         headers = {
@@ -330,13 +340,13 @@ class CloudSDK:
         response = requests.request("GET", url, headers=headers, data=payload)
         print(response)
 
-        ###Add Lab Profile ID to Equipment
+        # Add Lab Profile ID to Equipment
         equipment_info = response.json()
-        #print(equipment_info)
+        # print(equipment_info)
         equipment_info["profileId"] = test_profile_id
         print(equipment_info)
 
-        ###Update AP Info with Required Profile ID
+        # Update AP Info with Required Profile ID
         url = cloudSDK_url+"/portal/equipment"
         headers = {
             'Content-Type': 'application/json',
@@ -347,7 +357,7 @@ class CloudSDK:
         print(response)
 
     def get_cloudsdk_version(self, cloudSDK_url, bearer):
-        #print(latest_ap_image)
+        # print(latest_ap_image)
         url = cloudSDK_url+"/ping"
 
         payload = {}
@@ -372,7 +382,7 @@ class CloudSDK:
         }
 
         data_str = json.dumps(profile)
-        print("Creating new ap-profile, data: %s"%(data_str))
+        print("Creating new ap-profile, data: %s" % (data_str))
         response = requests.request("POST", url, headers=headers, data=data_str)
         ap_profile = response.json()
         print("New AP profile: ", ap_profile)
@@ -394,13 +404,13 @@ class CloudSDK:
         }
 
         data_str = json.dumps(profile)
-        print("Updating ap-profile, data: %s"%(data_str))
+        print("Updating ap-profile, data: %s" % (data_str))
         response = requests.request("PUT", url, headers=headers, data=data_str)
         print(response)
         return profile['id']
 
     def create_ssid_profile(self, cloudSDK_url, bearer, customer_id, template, name, ssid, passkey, radius, security, mode, vlan, radios):
-        print("create-ssid-profile, template: %s"%(template))
+        print("create-ssid-profile, template: %s" % (template))
         profile = self.get_customer_profile_by_name(cloudSDK_url, bearer, customer_id, template)
 
         profile['name'] = name
@@ -431,7 +441,7 @@ class CloudSDK:
                                             ssid, passkey, radius, security, mode, vlan, radios)
 
         # Update then.
-        print("Update existing ssid profile, name: %s"%(name))
+        print("Update existing ssid profile, name: %s" % (name))
         profile['name'] = name
         profile['details']['ssid'] = ssid
         profile['details']['keyStr'] = passkey
@@ -452,7 +462,7 @@ class CloudSDK:
 
     def create_radius_profile(self, cloudSDK_url, bearer, customer_id, template, name, subnet_name, subnet, subnet_mask,
                               region, server_name, server_ip, secret, auth_port):
-        print("Create-radius-profile called, template: %s"%(template))
+        print("Create-radius-profile called, template: %s" % (template))
         profile = self.get_customer_profile_by_name(cloudSDK_url, bearer, customer_id, template)
 
         profile['name'] = name
@@ -485,7 +495,7 @@ class CloudSDK:
         }
 
         data_str = json.dumps(profile)
-        print("Sending json to create radius: %s"%(data_str))
+        print("Sending json to create radius: %s" % (data_str))
         response = requests.request("POST", url, headers=headers, data=data_str)
         radius_profile = response.json()
         print(radius_profile)
@@ -499,8 +509,8 @@ class CloudSDK:
             # create one then
             return self.create_radius_profile(cloudSDK_url, bearer, customer_id, template, name, subnet_name, subnet, subnet_mask,
                                               region, server_name, server_ip, secret, auth_port)
-        
-        print("Found existing radius profile, will update, name: %s"%(name))
+
+        print("Found existing radius profile, will update, name: %s" % (name))
 
         subnet_config = profile['details']['subnetConfiguration']
         old_subnet_name = list(subnet_config.keys())[0]

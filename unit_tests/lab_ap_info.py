@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
-##AP Models Under Test
-ap_models = ["ec420","ea8300","ecw5211","ecw5410"]
+# AP Models Under Test
+ap_models = ["ec420", "ea8300", "ecw5211", "ecw5410"]
 
-##Cloud Type(cloudSDK = v1, CMAP = cmap)
+# Cloud Type(cloudSDK = v1, CMAP = cmap)
 cloud_type = "v1"
 
-##RADIUS Info
+# RADIUS Info
 radius_info = {
 
     "name": "Lab-RADIUS",
@@ -19,7 +19,7 @@ radius_info = {
     "secret": "testing123",
     "auth_port": 1812
 }
-##AP Models for firmware upload
+# AP Models for firmware upload
 cloud_sdk_models = {
     "ec420": "EC420-G1",
     "ea8300": "EA8300-CA",
@@ -41,10 +41,10 @@ mimo_2dot4g = {
     "ecw5410": "4x4"
 }
 
-##Customer ID for testing
+# Customer ID for testing
 customer_id = "2"
 
-##Test Case information - Maps a generic TC name to TestRail TC numbers
+# Test Case information - Maps a generic TC name to TestRail TC numbers
 test_cases = {
     "ap_upgrade": 2233,
     "5g_wpa2_bridge": 2236,
@@ -100,6 +100,6 @@ test_cases = {
     "radius_profile": 5808
 }
 
-## Other profiles
+# Other profiles
 radius_profile = 129
 rf_profile = 10

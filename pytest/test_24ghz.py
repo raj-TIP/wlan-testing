@@ -4,7 +4,7 @@
 
 import pytest
 from time import sleep, gmtime, strftime
-from sta_connect2 import StaConnect2
+
 
 @pytest.mark.usefixtures('setup_testrails')
 @pytest.mark.usefixtures('setup_cloudsdk')
@@ -16,7 +16,7 @@ class Test24ghz(object):
         lf_config = setup_cloudsdk["LANforge"]
         radio_config = setup_cloudsdk["24ghz"]
 
-        staConnect = StaConnect2(lf_config["host"], lf_config["port"], debug_ = False)
+        staConnect = StaConnect2(lf_config["host"], lf_config["port"], debug_=False)
         staConnect.sta_mode = 0
         staConnect.upstream_resource = 1
         staConnect.upstream_port = lf_config["eth_port"]
@@ -37,7 +37,8 @@ class Test24ghz(object):
 
         assert staConnect.passes()
         if setup_testrails > 0:
-            instantiate_testrail.update_testrail(case_id=2835, run_id=setup_testrails, status_id=1, msg="testing")
+            instantiate_testrail.update_testrail(
+                case_id=2835, run_id=setup_testrails, status_id=1, msg="testing")
 
     @pytest.mark.featureB
     def test_feature_b(self):

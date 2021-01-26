@@ -15,6 +15,7 @@ import requests
 from pprint import pprint
 import os
 
+
 class TestRail_Client:
     def __init__(self, command_line_args):
         self.user = command_line_args.testrail_user_id
@@ -27,7 +28,6 @@ class TestRail_Client:
         self.use_testrails = True
         if command_line_args.testrail_user_id == "NONE":
             self.use_testrails = False
-
 
     def send_get(self, uri, filepath=None):
         """Issue a GET request (read) against the API.
@@ -58,7 +58,7 @@ class TestRail_Client:
 
     def __send_request(self, method, uri, data):
         if not self.use_testrails:
-            return {"TESTRAILS":"DISABLED"}
+            return {"TESTRAILS": "DISABLED"}
 
         url = self.__url + uri
 
@@ -101,7 +101,7 @@ class TestRail_Client:
             if uri[:15] == 'get_attachments':   # Expecting file, not JSON
                 try:
                     print('opening file')
-                    print (str(response.content))
+                    print(str(response.content))
                     open(data, 'wb').write(response.content)
                     print('opened file')
                     return (data)
@@ -111,7 +111,7 @@ class TestRail_Client:
 
                 try:
                     return response.json()
-                except: # Nothing to return
+                except:  # Nothing to return
                     return {}
 
     def get_project_id(self, project_name):
@@ -122,13 +122,13 @@ class TestRail_Client:
 
         project_id = None
         projects = self.send_get('get_projects')
-        ##pprint(projects)
+        # pprint(projects)
         for project in projects:
-            if project['name']== project_name:
+            if project['name'] == project_name:
                 project_id = project['id']
                 # project_found_flag=True
                 break
-                print("project Id =",project_id)
+                print("project Id =", project_id)
         return project_id
 
     def get_run_id(self, test_run_name):
@@ -143,7 +143,7 @@ class TestRail_Client:
         try:
             test_runs = self.send_get('get_runs/%s' % (project_id))
             #print("------------TEST RUNS----------")
-            #pprint(test_runs)
+            # pprint(test_runs)
 
         except Exception:
             print
@@ -156,7 +156,6 @@ class TestRail_Client:
                     #print("run Id in Test Runs=",run_id)
                     break
             return run_id
-
 
     def update_testrail(self, case_id, run_id, status_id, msg):
         "Update TestRail for a given run_id and case_id"
@@ -179,14 +178,15 @@ class TestRail_Client:
                 result = self.send_post(
                     'add_result_for_case/%s/%s' % (run_id, case_id),
                     {'status_id': status_id, 'comment': msg})
-                print("result in post",result)
+                print("result in post", result)
             except Exception:
                 print
                 'Exception in update_testrail() updating TestRail.'
 
             else:
                 print
-                'Updated test result for case: %s in test run: %s with msg:%s' % (case_id, run_id, msg)
+                'Updated test result for case: %s in test run: %s with msg:%s' % (
+                    case_id, run_id, msg)
 
         return update_flag
 
@@ -195,6 +195,7 @@ class TestRail_Client:
             'add_run/%s' % (project_id),
             {'name': name, 'case_ids': case_ids, 'milestone_id': milestone_id, 'description': description, 'include_all': False})
         print("result in post", result)
+
 
 class APIError(Exception):
     pass

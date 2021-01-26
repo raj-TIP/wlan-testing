@@ -1,3 +1,10 @@
+from lab_ap_info import cloud_type
+from lab_ap_info import customer_id
+from lab_ap_info import mimo_5g
+from lab_ap_info import mimo_2dot4g
+from lab_ap_info import ap_models
+from lab_ap_info import profile_info_dict
+from lab_ap_info import equipment_id_dict
 import csv
 import sys
 import time
@@ -12,19 +19,19 @@ import cloudsdk
 from cloudsdk import CloudSDK
 import lab_ap_info
 
-cloudSDK_url=os.getenv('CLOUD_SDK_URL')
+cloudSDK_url = os.getenv('CLOUD_SDK_URL')
 station = ["tput5000"]
 runtime = 10
-csv_path=os.getenv('CSV_PATH')
+csv_path = os.getenv('CSV_PATH')
 bridge_upstream_port = "eth2"
 nat_upstream_port = "eth2"
 vlan_upstream_port = "vlan100"
 
-#EAP Credentials
-identity=os.getenv('EAP_IDENTITY')
-ttls_password=os.getenv('EAP_PWD')
+# EAP Credentials
+identity = os.getenv('EAP_IDENTITY')
+ttls_password = os.getenv('EAP_PWD')
 
-local_dir=os.getenv('TPUT_LOG_DIR')
+local_dir = os.getenv('TPUT_LOG_DIR')
 logger = logging.getLogger('Throughput_Test')
 hdlr = logging.FileHandler(local_dir+"/Throughput_Testing.log")
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -40,8 +47,9 @@ if sys.version_info[0] != 3:
 if 'py-json' not in sys.path:
     sys.path.append('../../py-json')
 
+
 def throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput):
-    #parse client_tput list returned from single_client_throughput
+    # parse client_tput list returned from single_client_throughput
     udp_ds = client_tput[0].partition(": ")[2]
     udp_us = client_tput[1].partition(": ")[2]
     tcp_ds = client_tput[2].partition(": ")[2]
@@ -65,21 +73,16 @@ def throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode
     readFile.close()
     writeFile.close()
 
-#Import dictionaries for AP Info
-from lab_ap_info import equipment_id_dict
-from lab_ap_info import profile_info_dict
-from lab_ap_info import ap_models
-from lab_ap_info import mimo_2dot4g
-from lab_ap_info import mimo_5g
-from lab_ap_info import customer_id
-from lab_ap_info import cloud_type
-#import json file to determine if throughput should be run for specific AP model
+
+# Import dictionaries for AP Info
+# import json file to determine if throughput should be run for specific AP model
 sanity_status = json.load(open("sanity_status.json"))
 
-#create CSV file for test run
+# create CSV file for test run
 today = str(date.today())
 csv_file = csv_path+"throughput_test_"+today+".csv"
-headers = ['AP Type', 'Firmware','Radio', 'MIMO', 'Security', 'Mode', 'UDP Downstream (Mbps)', 'UDP Upstream (Mbps)', 'TCP Downstream (Mbps)', 'TCP Upstream (Mbps)']
+headers = ['AP Type', 'Firmware', 'Radio', 'MIMO', 'Security', 'Mode',
+           'UDP Downstream (Mbps)', 'UDP Upstream (Mbps)', 'TCP Downstream (Mbps)', 'TCP Upstream (Mbps)']
 with open(csv_file, "w") as file:
     create = csv.writer(file)
     create.writerow(headers)
@@ -97,15 +100,15 @@ logger.info('Start of Throughput Test')
 for key in equipment_id_dict:
     if sanity_status['sanity_status'][key] == "passed":
         logger.info("Running throughput test on " + key)
-        ##Get Bearer Token to make sure its valid (long tests can require re-auth)
+        # Get Bearer Token to make sure its valid (long tests can require re-auth)
         bearer = CloudSDK.get_bearer(cloudSDK_url, cloud_type)
-        ###Get Current AP Firmware
+        # Get Current AP Firmware
         equipment_id = equipment_id_dict[key]
         ap_fw = CloudSDK.ap_firmware(customer_id, equipment_id, cloudSDK_url, bearer)
         fw_model = ap_fw.partition("-")[0]
         print("AP MODEL UNDER TEST IS", fw_model)
         print('Current AP Firmware:', ap_fw)
-        ##add current FW to dictionary
+        # add current FW to dictionary
         ap_firmware_dict[fw_model] = ap_fw
 
         ###########################################################################
@@ -113,15 +116,15 @@ for key in equipment_id_dict:
         ###########################################################################
         print("Testing for Bridge SSIDs")
         logger.info("Starting Brdige SSID tput tests on " + key)
-        ###Set Proper AP Profile for Bridge SSID Tests
+        # Set Proper AP Profile for Bridge SSID Tests
         test_profile_id = profile_info_dict[fw_model]["profile_id"]
-        #print(test_profile_id)
+        # print(test_profile_id)
         ap_profile = CloudSDK.set_ap_profile(equipment_id, test_profile_id, cloudSDK_url, bearer)
-        ### Wait for Profile Push
+        # Wait for Profile Push
         print('-----------------PROFILE PUSH -------------------')
         time.sleep(180)
 
-        ##Set port for LANForge
+        # Set port for LANForge
         port = bridge_upstream_port
 
         # 5G WPA2 Enterprise UDP DS/US and TCP DS/US
@@ -134,12 +137,13 @@ for key in equipment_id_dict:
         eap_type = "TTLS"
         mode = "Bridge"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
+        client_tput = single_client_throughput.eap_tput(
+            sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
         print(fw_model, "5 GHz WPA2-EAP throughput:\n", client_tput)
         security = "wpa2-eap"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
-        #5G WPA2 UDP DS/US and TCP DS/US
+        # 5G WPA2 UDP DS/US and TCP DS/US
         ap_model = fw_model
         firmware = ap_fw
         radio = lab_ap_info.lanforge_5g
@@ -148,8 +152,9 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "Bridge"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
-        print(fw_model, "5 GHz WPA2 throughput:\n",client_tput)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        print(fw_model, "5 GHz WPA2 throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
@@ -162,8 +167,9 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "Bridge"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
-        print(fw_model, "5 GHz WPA throughput:\n",client_tput)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        print(fw_model, "5 GHz WPA throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
@@ -205,8 +211,9 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "Bridge"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
-        print(fw_model, "2.4 GHz WPA2 throughput:\n",client_tput)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        print(fw_model, "2.4 GHz WPA2 throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
@@ -219,8 +226,9 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "Bridge"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
-        print(fw_model, "2.4 GHz WPA throughput:\n",client_tput)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        print(fw_model, "2.4 GHz WPA throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
@@ -242,16 +250,16 @@ for key in equipment_id_dict:
         ###########################################################################
         print('Testing for NAT SSIDs')
         logger.info("Starting NAT SSID tput tests on " + key)
-        ###Set Proper AP Profile for NAT SSID Tests
+        # Set Proper AP Profile for NAT SSID Tests
         test_profile_id = profile_info_dict[fw_model + '_nat']["profile_id"]
         print(test_profile_id)
         ap_profile = CloudSDK.set_ap_profile(equipment_id, test_profile_id, cloudSDK_url, bearer)
 
-        ### Wait for Profile Push
+        # Wait for Profile Push
         print('-----------------PROFILE PUSH -------------------')
         time.sleep(180)
 
-        ##Set port for LANForge
+        # Set port for LANForge
         port = nat_upstream_port
 
         # 5G WPA2 Enterprise UDP DS/US and TCP DS/US
@@ -279,7 +287,8 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "NAT"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "5 GHz WPA2 NAT throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -293,7 +302,8 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "NAT"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "5 GHz WPA NAT throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -321,7 +331,8 @@ for key in equipment_id_dict:
         eap_type = "TTLS"
         mode = "NAT"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
+        client_tput = single_client_throughput.eap_tput(
+            sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
         print(fw_model, "2.4 GHz WPA2-EAP NAT throughput:\n", client_tput)
         security = "wpa2-eap"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -335,7 +346,8 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "NAT"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "2.4 GHz WPA2 NAT throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -349,7 +361,8 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "NAT"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "2.4 GHz WPA NAT throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -372,16 +385,16 @@ for key in equipment_id_dict:
         ###########################################################################
         print('Testing for Custom VLAN SSIDs')
         logger.info("Starting Custom VLAN SSID tput tests on " + key)
-        ###Set Proper AP Profile for NAT SSID Tests
+        # Set Proper AP Profile for NAT SSID Tests
         test_profile_id = profile_info_dict[fw_model + '_vlan']["profile_id"]
         print(test_profile_id)
         ap_profile = CloudSDK.set_ap_profile(equipment_id, test_profile_id, cloudSDK_url, bearer)
 
-        ### Wait for Profile Push
+        # Wait for Profile Push
         print('-----------------PROFILE PUSH -------------------')
         time.sleep(180)
 
-        ##Set port for LANForge
+        # Set port for LANForge
         port = vlan_upstream_port
 
         # 5G WPA2 Enterprise UDP DS/US and TCP DS/US
@@ -394,7 +407,8 @@ for key in equipment_id_dict:
         eap_type = "TTLS"
         mode = "VLAN"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
+        client_tput = single_client_throughput.eap_tput(
+            sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
         print(fw_model, "5 GHz WPA2-EAP VLAN throughput:\n", client_tput)
         security = "wpa2-eap"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -408,7 +422,8 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "VLAN"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "5 GHz WPA2 VLAN throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -422,7 +437,8 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "VLAN"
         mimo = mimo_5g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "5 GHz WPA VLAN throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -450,7 +466,8 @@ for key in equipment_id_dict:
         eap_type = "TTLS"
         mode = "VLAN"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.eap_tput(sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
+        client_tput = single_client_throughput.eap_tput(
+            sta_list, ssid_name, radio, security, eap_type, identity, ttls_password, port)
         print(fw_model, "2.4 GHz WPA2-EAP VLAN throughput:\n", client_tput)
         security = "wpa2-eap"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -464,7 +481,8 @@ for key in equipment_id_dict:
         security = "wpa2"
         mode = "VLAN"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "2.4 GHz WPA2 VLAN throughput:\n", client_tput)
         security = "wpa2-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -478,7 +496,8 @@ for key in equipment_id_dict:
         security = "wpa"
         mode = "VLAN"
         mimo = mimo_2dot4g[fw_model]
-        client_tput = single_client_throughput.main(ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
+        client_tput = single_client_throughput.main(
+            ap_model, firmware, radio, ssid_name, ssid_psk, security, station, runtime, port)
         print(fw_model, "2.4 GHz WPA VLAN throughput:\n", client_tput)
         security = "wpa-psk"
         throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
@@ -496,28 +515,27 @@ for key in equipment_id_dict:
         # print(fw_model, "2.4 GHz Open VLAN throughput:\n",client_tput)
         # throughput_csv(csv_file, ssid_name, ap_model, mimo, firmware, security, mode, client_tput)
 
-
-        #Indicates throughput has been run for AP model
+        # Indicates throughput has been run for AP model
         sanity_status['sanity_status'][key] = "tput run"
         logger.info("Trhoughput tests complete on " + key)
 
     elif sanity_status['sanity_status'][key] == "tput run":
         print("Throughput test already run on", key)
-        logger.info("Throughput test already run on "+ key +" for latest AP FW")
+        logger.info("Throughput test already run on " + key + " for latest AP FW")
 
     else:
-        print(key,"did not pass Nightly Sanity. Skipping throughput test on this AP Model")
+        print(key, "did not pass Nightly Sanity. Skipping throughput test on this AP Model")
         logger.info(key+" did not pass Nightly Sanity. Skipping throughput test.")
 
-#Indicate which AP model has had tput test to external json file
+# Indicate which AP model has had tput test to external json file
 with open('sanity_status.json', 'w') as json_file:
-  json.dump(sanity_status, json_file)
+    json.dump(sanity_status, json_file)
 
 with open(csv_file, 'r') as readFile:
     reader = csv.reader(readFile)
     lines = list(reader)
     row_count = len(lines)
-    #print(row_count)
+    # print(row_count)
 
 if row_count <= 1:
     os.remove(csv_file)
