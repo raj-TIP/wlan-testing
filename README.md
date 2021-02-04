@@ -16,7 +16,6 @@ All code must be written in python 3 and conform to PEP 8 style guide. The test 
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)   
 [![PEP8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://www.python.org/dev/peps/pep-0008/)  
 
-
 ## Proposed Directory Structure
 ```bash
 ├── tests
