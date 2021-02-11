@@ -32,7 +32,10 @@ capabilities = {
     # 'fullReset': false, # Whether to install and launch the app automatically.
 }
 # Initialize the Appium driver with Perfecto
+<<<<<<< HEAD
 cloudName = ""
+=======
+>>>>>>> 88832235479e747ce9fb1d9b79811dd7036a8cd2
 driver = webdriver.Remote('https://' + cloudName + '.perfectomobile.com/nexperience/perfectomobile/wd/hub', capabilities)
 # set implicit wait time 
 driver.implicitly_wait(20)
